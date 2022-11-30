@@ -11,14 +11,9 @@ class session
 {
 public:
   session(tcp::socket socket)
-    : socket_(std::move(socket))
-  {
-  }
+    : socket_(std::move(socket)){}
 
-  void start()
-  {
-    do_read();
-  }
+  void start(){do_read();}
 
 private:
   void do_read()
@@ -58,9 +53,7 @@ class server
 public:
   server(boost::asio::io_context& io_context, short port)
     : acceptor_(io_context, tcp::endpoint(tcp::v4(), port))
-  {
-    do_accept();
-  }
+  {do_accept();}
 
 private:
   void do_accept()
@@ -72,7 +65,6 @@ private:
           {
             std::make_shared<session>(std::move(socket))->start();
           }
-
           do_accept();
         });
   }
