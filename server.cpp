@@ -2,6 +2,7 @@
 #include <iostream>
 #include <memory>
 #include <utility>
+#include <fstream>
 #include <boost/asio.hpp>
 #include "./proto/message.pb.h"
 
@@ -84,15 +85,19 @@ int main(int argc, char* argv[])
 {
   try
   {
-    if (argc != 2)
+    ifstream file;
+    file.open("server_port");
+    if(!file.is_open())
     {
-      std::cerr << "Usage: async_tcp_echo_server <port>\n";
-      return 1;
+      return -1;
     }
+    int port;
+    file >> port;
+    file.close();
 
     boost::asio::io_context io_context;
 
-    server s(io_context, std::atoi(argv[1]));
+    server s(io_context, port);
 
     io_context.run();
   }
