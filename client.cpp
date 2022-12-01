@@ -2,6 +2,7 @@
 #include <cstring>
 #include <iostream>
 #include <boost/asio.hpp>
+#include "./proto/message.pb.h"
 
 using boost::asio::ip::tcp;
 using namespace std;
@@ -24,17 +25,23 @@ int main(int argc, char* argv[])
     ip::tcp::socket sock(service);
     sock.connect(ep);
 
+    TestTask::Messages::WrapperMessage msg;
+    TestTask::Messages::FastResponse fast_msg;
 
     std::cout << "Enter message: ";
     char request[max_length];
+    char test[max_length];
     std::cin.getline(request, max_length);
-    size_t request_length = std::strlen(request);
-    write(sock, buffer(request, request_length));
+    *fast_msg.mutable_current_date_time() = request;
+    *msg.mutable_fast_response() = fast_msg;
+    msg.SerializeToArray(test, 1024);
+    write(sock, buffer(test, strlen(test)));
 
     char reply[max_length];
-    size_t reply_length = read(sock, buffer(reply, request_length));
+    size_t reply_length = read(sock, buffer(reply, strlen(test)));
+    msg.ParseFromArray(reply, strlen(test));
     std::cout << "Reply is: ";
-    std::cout.write(reply, reply_length);
+    std::cout.write(msg.fast_response().current_date_time().c_str(), msg.fast_response().current_date_time().size());
     std::cout << "\n";
   }
   catch (std::exception& e)

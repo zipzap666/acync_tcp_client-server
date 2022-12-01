@@ -3,7 +3,10 @@
 #include <memory>
 #include <utility>
 #include <boost/asio.hpp>
+#include "./proto/message.pb.h"
 
+
+using namespace std;
 using boost::asio::ip::tcp;
 
 class session
@@ -16,6 +19,8 @@ public:
   void start(){do_read();}
 
 private:
+  TestTask::Messages::WrapperMessage msg;
+
   void do_read()
   {
     auto self(shared_from_this());
@@ -24,7 +29,9 @@ private:
         {
           if (!ec)
           {
-            std::cout << data_ << std::endl;
+            msg.ParseFromArray(data_, length);
+            msg.fast_response().current_date_time();
+            std::cout << msg.fast_response().current_date_time() << std::endl;
             do_write(length);
           }
         });
@@ -33,7 +40,8 @@ private:
   void do_write(std::size_t length)
   {
     auto self(shared_from_this());
-    boost::asio::async_write(socket_, boost::asio::buffer(data_, length),
+    string str = msg.SerializeAsString();
+    boost::asio::async_write(socket_, boost::asio::buffer(str.c_str(), str.size()),
         [this, self](boost::system::error_code ec, std::size_t /*length*/)
         {
           if (!ec)
