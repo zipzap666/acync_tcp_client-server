@@ -4,4 +4,4 @@ compile client:
 
 compile server:
 
-    g++ server.cpp ./proto/message.pb.cc -o server.out -I. -lboost_system -lprotobuf
+    g++ server.cpp ./proto/message.pb.cc -o server.out -I. -lboost_system -pthread -lprotobuf
