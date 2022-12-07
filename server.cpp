@@ -5,7 +5,8 @@
 #include <fstream>
 #include <thread>
 #include <chrono>
-#include <ctime> 
+#include <ctime>
+#include <bitset>
 #include <boost/asio.hpp>
 #include "./proto/message.pb.h"
 
@@ -21,91 +22,111 @@ public:
     session(tcp::socket socket)
         : socket_(std::move(socket)) {}
 
-    void start() { do_read(); }
+    void start() { do_read_size(); }
 
 private:
-    void do_read()
+    void do_read_size()
     {
         auto self(shared_from_this());
-        socket_.async_read_some(boost::asio::buffer(data_, max_length),
-                                [this, self](boost::system::error_code ec, std::size_t length)
+        char data[32];
+        socket_.async_read_some(boost::asio::buffer(data, 32),
+                                [this, self, &data](boost::system::error_code ec, std::size_t length)
                                 {
                                     count_conectios++;
                                     if (!ec)
                                     {
-                                        WrapperMessage* from = new WrapperMessage();
-                                        from->ParseFromString(data_);
-                                        check_msg(move(from));
-                                        cout << from->request_for_slow_response().time_in_seconds_to_sleep() << endl;
+                                        size_t length = 0;
+                                        for (int i = 0; i < 32; i++)
+                                        {
+                                            length <<= 1;
+                                            length += data[i] - '0';
+                                        }
+                                        do_read(length);
                                     }
                                 });
     }
 
-    void check_msg(WrapperMessage* from)
+    void do_read(size_t size)
     {
-        
-        if(from->request_for_slow_response().IsInitialized())
+        auto self(shared_from_this());
+        char data[1024];
+        socket_.async_read_some(boost::asio::buffer(data, size),
+                                [this, self, data](boost::system::error_code ec, std::size_t length)
+                                {
+                                    if (!ec)
+                                    {
+                                        WrapperMessage *from = new WrapperMessage();
+                                        from->ParseFromString(data);
+                                        check_msg(move(from));
+                                    }
+                                });
+    }
+
+    void check_msg(WrapperMessage *from)
+    {
+
+        if (from->request_for_fast_response().IsInitialized())
         {
-            cout << 2 << endl;
-            slow_response(move(from));
-        }
-        else if(from->request_for_fast_response().IsInitialized())
-        {
-            cout << 1 << endl;
             fast_response(move(from));
         }
-        else{
+        else if (from->request_for_slow_response().IsInitialized())
+        {
+            slow_response(move(from));
+        }
+        else
+        {
             do_write(move(from));
         }
     }
 
-    void fast_response(WrapperMessage* from)
+    void fast_response(WrapperMessage *from)
     {
-        WrapperMessage* to = new WrapperMessage();
-        Messages::FastResponse* fast_msg = new Messages::FastResponse();
+        WrapperMessage *to = new WrapperMessage();
+        Messages::FastResponse *fast_msg = new Messages::FastResponse();
         time_t time = chrono::system_clock::to_time_t(chrono::system_clock::now());
         *fast_msg->mutable_current_date_time() = string(ctime(&time));
         cout << fast_msg->current_date_time() << endl;
         to->set_allocated_fast_response(move(fast_msg));
-        
+
         delete from;
         do_write(move(to));
     }
 
-    void slow_response(WrapperMessage* from)
+    void slow_response(WrapperMessage *from)
     {
         auto wait = async(sleep, from->request_for_slow_response().time_in_seconds_to_sleep());
         wait.get();
-        
-        WrapperMessage* to = new WrapperMessage();
-        Messages::SlowResponse* slow_msg = new Messages::SlowResponse();
+
+        WrapperMessage *to = new WrapperMessage();
+        Messages::SlowResponse *slow_msg = new Messages::SlowResponse();
         slow_msg->set_connected_client_count(count_conectios);
-        cout << slow_msg->connected_client_count() << endl;
         to->set_allocated_slow_response(move(slow_msg));
-        
+
         delete from;
-        do_write(move(to));        
+        do_write(move(to));
     }
 
-    void do_write(WrapperMessage* to)
+    void do_write(WrapperMessage *to)
     {
         auto self(shared_from_this());
-        char request[max_length];
-        to->SerializeToArray(request, 1024);
+        string request;
+        to->SerializeToString(&request);
         delete to;
-        cout << request << endl;
-        boost::asio::async_write(socket_, boost::asio::buffer(request, strlen(request)),
+
+        string size = bitset<32>(request.size()).to_string();
+        request = size + request;
+
+        boost::asio::async_write(socket_, boost::asio::buffer(request.c_str(), request.size()),
                                  [this, self](boost::system::error_code ec, std::size_t /*length*/)
                                  {
                                      if (!ec)
                                      {
-                                         do_read();
+                                         do_read_size();
                                          count_conectios--;
                                      }
                                      count_conectios--;
                                  });
     }
-
 
     inline static uint32_t count_conectios = 0;
     tcp::socket socket_;
@@ -113,7 +134,6 @@ private:
     {
         max_length = 1024
     };
-    char data_[max_length];
 };
 
 class server
