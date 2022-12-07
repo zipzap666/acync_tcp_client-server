@@ -1,2 +1,7 @@
-compile:
-g++ src.cpp -o dest.out -I. -Wall -lboost_system -lboost_thread -lboost_filesystem -pthread
+compile client:
+    
+    g++ client.cpp ./proto/message.pb.cc -o client.out -I. -lboost_system -lprotobuf
+
+compile server:
+
+    g++ server.cpp ./proto/message.pb.cc -o server.out -I. -lboost_system -pthread -lprotobuf
