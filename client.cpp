@@ -28,7 +28,7 @@ void fastRequest()
     msg.SerializeToString(&request);
     string size = bitset<32>(request.size()).to_string();
     request = size + request;
-    cout << request << endl;
+    cout << request << " : " << request.size() << endl;
     write(sock, buffer(request.c_str(), request.size()));
 
     char length_str[33];
@@ -54,7 +54,7 @@ void slowRequest()
 {
     TestTask::Messages::WrapperMessage msg;
     TestTask::Messages::RequestForSlowResponse slow_msg;
-    slow_msg.set_time_in_seconds_to_sleep(5);
+    slow_msg.set_time_in_seconds_to_sleep(10);
     *msg.mutable_request_for_slow_response() = slow_msg;
     ip::tcp::endpoint ep(ip::tcp::endpoint(ip::tcp::v4(), 25555));
     io_service service;
@@ -63,12 +63,27 @@ void slowRequest()
 
     string request;
     msg.SerializeToString(&request);
-    write(sock, buffer(request, request.size()));
+    string size = bitset<32>(request.size()).to_string();
+    request = size + request;
+    cout << request << " : " << request.size() << endl;
+    write(sock, buffer(request.c_str(), request.size()));
 
+    char length_str[33];
+    size_t length = 0;
+    read(sock, buffer(length_str, 32));
+    length_str[32] = '\0';
+    for (int i = 0; i < 32; i++)
+    {
+        length <<= 1;
+        length += length_str[i] - '0';
+    }
+    cout << "Size msg is: " << length << endl;
+    cout << length_str << endl;
     char reply[max_length];
-    size_t reply_length = read(sock, buffer(reply, request.size()));
-    msg.ParseFromString(reply);
-    std::cout << "Reply is: " << strlen(reply);
+    size_t reply_length = read(sock, buffer(reply, length));
+    msg.ParseFromArray(reply, reply_length);
+    std::cout << "Reply is: ";
+    std::cout << msg.fast_response().current_date_time() << endl;
     std::cout << msg.slow_response().connected_client_count() << endl;
 }
 
@@ -76,7 +91,7 @@ int main(int argc, char *argv[])
 {
     try
     {
-        fastRequest();
+        slowRequest();
     }
     catch (std::exception &e)
     {
