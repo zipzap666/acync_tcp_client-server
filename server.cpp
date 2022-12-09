@@ -101,7 +101,7 @@ private:
 
         WrapperMessage *to = new WrapperMessage();
         Messages::SlowResponse *slow_msg = new Messages::SlowResponse();
-        slow_msg->set_connected_client_count();
+        slow_msg->set_connected_client_count(count_conectios);
         to->set_allocated_slow_response(move(slow_msg));
 
         int seconds = from->request_for_slow_response().time_in_seconds_to_sleep();
