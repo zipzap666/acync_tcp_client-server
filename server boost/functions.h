@@ -1,5 +1,6 @@
 #ifndef FUNCTIONS_HEADER
 #define FUNCTIONS_HEADER
+#include <boost/date_time/posix_time/posix_time.hpp>
 #include <iostream>
 #include <memory>
 #include "./proto/message.pb.h"
