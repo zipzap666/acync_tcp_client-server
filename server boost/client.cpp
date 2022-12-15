@@ -9,13 +9,6 @@ using namespace std;
 using namespace boost::asio;
 using namespace TestTask::Messages;
 
-
-
-enum
-{
-    max_length = 1024
-};
-
 void fastRequest()
 {
     WrapperMessage msg;
@@ -30,7 +23,7 @@ void fastRequest()
     msg.SerializeToString(&request);
     char *size_request = convert_int32_to_str(request.size());
     request = string(size_request, 4) + request;
-    delete []size_request;
+    delete[] size_request;
     cout << request << " : " << request.size() << endl;
     write(sock, buffer(request.c_str(), request.size()));
 
@@ -42,7 +35,7 @@ void fastRequest()
     char *reply = new char[length]();
     read(sock, buffer(reply, length));
     msg.ParseFromArray(reply, length);
-    delete []reply;
+    delete[] reply;
     std::cout << "Reply is: ";
     std::cout << msg.fast_response().current_date_time() << endl;
 }
@@ -62,7 +55,7 @@ void slowRequest()
     msg.SerializeToString(&request);
     char *size_request = convert_int32_to_str(request.size());
     request = string(size_request, 4) + request;
-    delete []size_request;
+    delete[] size_request;
     cout << request << " : " << request.size() << endl;
     write(sock, buffer(request.c_str(), request.size()));
 
@@ -74,7 +67,7 @@ void slowRequest()
     char *reply = new char[length]();
     read(sock, buffer(reply, length));
     msg.ParseFromArray(reply, length);
-    delete []reply;
+    delete[] reply;
     std::cout << "Reply is: ";
     std::cout << msg.slow_response().connected_client_count() << endl;
 }

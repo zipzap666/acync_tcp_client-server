@@ -10,7 +10,6 @@
 using namespace std;
 using boost::asio::ip::tcp;
 using namespace TestTask::Messages;
-using namespace TestTask;
 
 class session
     : public std::enable_shared_from_this<session>
@@ -163,7 +162,8 @@ private:
                         move(timer_),
                         count_connections_,
                         id_,
-                        log_file_)->start();
+                        log_file_)
+                        ->start();
                     id_++;
                 }
                 do_accept();

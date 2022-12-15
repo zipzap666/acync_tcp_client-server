@@ -42,13 +42,13 @@ TestTask::Messages::WrapperMessage *server_fast_response(TestTask::Messages::Wra
 }
 
 TestTask::Messages::WrapperMessage *server_slow_response(TestTask::Messages::WrapperMessage *from, size_t count_connectios)
-    {
-        TestTask::Messages::WrapperMessage *to = new TestTask::Messages::WrapperMessage();
-        TestTask::Messages::SlowResponse *slow_msg = new TestTask::Messages::SlowResponse();
-        slow_msg->set_connected_client_count(count_connectios);
-        to->set_allocated_slow_response(std::move(slow_msg));
+{
+    TestTask::Messages::WrapperMessage *to = new TestTask::Messages::WrapperMessage();
+    TestTask::Messages::SlowResponse *slow_msg = new TestTask::Messages::SlowResponse();
+    slow_msg->set_connected_client_count(count_connectios);
+    to->set_allocated_slow_response(std::move(slow_msg));
 
-        return std::move(to);
-    }
+    return std::move(to);
+}
 
 #endif // FUNCTIONS_HEADER
