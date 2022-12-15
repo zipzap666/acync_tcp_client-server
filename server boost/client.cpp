@@ -10,6 +10,22 @@ using namespace std;
 using namespace boost::asio;
 using namespace TestTask::Messages;
 
+char* convert_int32_to_str(uint32_t n)
+{
+    char *size_char = new char[4]();
+    uint32_t mask = 255;
+
+    for(int i = 3; i >= 0; --i)
+    {
+        size_char[i] = static_cast<char>(n & mask);
+        n = n >> 8;
+    }
+
+    cout << uint32_t(size_char[0]) << " " << uint32_t(size_char[1]) << " " << uint32_t(size_char[2]) << " " << uint32_t(u_char(size_char[3])) << endl;
+
+    return size_char;
+}
+
 enum
 {
     max_length = 1024
@@ -20,19 +36,21 @@ void fastRequest()
     WrapperMessage msg;
     RequestForFastResponse fast_msg;
     *msg.mutable_request_for_fast_response() = fast_msg;
-    cout << msg.has_request_for_fast_response() << endl;
-    cout << msg.has_request_for_slow_response() << endl;
     ip::tcp::endpoint ep(ip::tcp::endpoint(ip::tcp::v4(), 29999));
     io_service service;
     ip::tcp::socket sock(service);
     sock.connect(ep);
+
+    char* test = convert_int32_to_str(157);
+
+    delete []test;
 
     string request;
     msg.SerializeToString(&request);
     string size = bitset<32>(request.size()).to_string();
     request = size + request;
     cout << request << " : " << request.size() << endl;
-    write(sock, buffer(request.c_str(), request.size()));
+    write(sock, buffer(request.c_str(), 4));
 
     char length_str[33];
     size_t length = 0;

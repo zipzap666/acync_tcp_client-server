@@ -25,12 +25,17 @@ public:
 
     void start() { do_read_size(); }
 
+    ~session()
+    {
+        cout << "Disconnected" << endl;
+    }
+
 private:
     void do_read_size()
     {
         auto self(shared_from_this());
-        char data[32];
-        socket_.async_read_some(boost::asio::buffer(data, 32),
+        u_char data[4];
+        socket_.async_read_some(boost::asio::buffer(data, 4),
                                 [this, self, &data](boost::system::error_code ec, std::size_t length)
                                 {
                                     count_conectios++;
@@ -52,17 +57,16 @@ private:
     void do_read(size_t size)
     {
         auto self(shared_from_this());
-        char *data = new char[size + 1]();
+        char *data = new char[size]();
         socket_.async_read_some(boost::asio::buffer(data, size),
                                 [this, self, data, size](boost::system::error_code ec, std::size_t length)
                                 {
                                     if (!ec)
                                     {
                                         cout << data << endl;
-                                        data[32] = '\0';
                                         WrapperMessage *from = new WrapperMessage();
                                         from->ParseFromString(data);
-                                        delete data;
+                                        delete []data;
                                         check_msg(move(from));
                                         return;
                                     }
