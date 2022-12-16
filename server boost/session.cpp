@@ -1,5 +1,28 @@
 #include "session.h"
 
+session::session(boost::asio::ip::tcp::socket socket,
+                 boost::asio::deadline_timer timer,
+                 std::shared_ptr<size_t> &count_connections,
+                 size_t id, std::shared_ptr<std::ofstream> &file)
+    : socket_(std::move(socket)),
+      timer_(std::move(timer)),
+      count_connectios_(count_connections),
+      id_(id), file_(file)
+{
+    std::cout << "Connected id: " << id_ << std::endl;
+    *file_ << "Connected id: " << id_ << std::endl;
+    (*count_connectios_)++;
+}
+
+session::~session()
+{
+    std::cout << "Disconnected id: " << id_ << std::endl;
+    *file_ << "Disconnected id: " << id_ << std::endl;
+    (*count_connectios_)--;
+}
+
+void session::start() { do_read_size(); }
+
 void session::do_read_size()
 {
     auto self(shared_from_this());

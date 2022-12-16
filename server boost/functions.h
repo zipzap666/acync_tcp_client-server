@@ -5,10 +5,10 @@
 #include <memory>
 #include "./proto/message.pb.h"
 
-char *convert_int32_to_str(uint32_t n)
+inline char *convert_int32_to_str(uint32_t n)
 {
-    char *str = new char[4]();
-    uint32_t mask = 255;
+    char *str = new char[sizeof(uint32_t)]();
+    uint8_t mask = 255;
 
     for (int i = 3; i >= 0; --i)
     {
@@ -18,7 +18,7 @@ char *convert_int32_to_str(uint32_t n)
     return str;
 }
 
-uint32_t convert_str_to_int32(char *str)
+inline uint32_t convert_str_to_int32(char str[sizeof(uint32_t)])
 {
     uint32_t num = 0;
 
@@ -27,22 +27,22 @@ uint32_t convert_str_to_int32(char *str)
         num += uint32_t(u_char(str[i]));
         num = num << 8;
     }
-
     num += uint32_t(u_char(str[3]));
+
     return num;
 }
 
-TestTask::Messages::WrapperMessage *server_fast_response(TestTask::Messages::WrapperMessage *from)
+inline TestTask::Messages::WrapperMessage *server_fast_response(TestTask::Messages::WrapperMessage *from)
 {
     TestTask::Messages::WrapperMessage *to = new TestTask::Messages::WrapperMessage();
     TestTask::Messages::FastResponse *fast_msg = new TestTask::Messages::FastResponse();
     boost::posix_time::ptime t = boost::posix_time::microsec_clock::universal_time();
-    *fast_msg->mutable_current_date_time() = boost::posix_time::to_iso_string(t);
+    *fast_msg->mutable_current_date_time() = std::string(boost::posix_time::to_iso_string(t).c_str(), sizeof("YYYYMMDDThhmmss.fff") - 1);
     to->set_allocated_fast_response(std::move(fast_msg));
     return std::move(to);
 }
 
-TestTask::Messages::WrapperMessage *server_slow_response(TestTask::Messages::WrapperMessage *from, size_t count_connectios)
+inline TestTask::Messages::WrapperMessage *server_slow_response(TestTask::Messages::WrapperMessage *from, size_t count_connectios)
 {
     TestTask::Messages::WrapperMessage *to = new TestTask::Messages::WrapperMessage();
     TestTask::Messages::SlowResponse *slow_msg = new TestTask::Messages::SlowResponse();
@@ -50,6 +50,16 @@ TestTask::Messages::WrapperMessage *server_slow_response(TestTask::Messages::Wra
     to->set_allocated_slow_response(std::move(slow_msg));
 
     return std::move(to);
+}
+
+inline std::string msg_to_write(TestTask::Messages::WrapperMessage *msg)
+{
+    std::string str_msg;
+    msg->SerializeToString(&str_msg);
+    char *size_msg = convert_int32_to_str(str_msg.size());
+    str_msg = std::string(size_msg, sizeof(uint32_t)) + str_msg;
+    delete[] size_msg;
+    return str_msg;
 }
 
 #endif // FUNCTIONS_HEADER

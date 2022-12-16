@@ -19,12 +19,7 @@ void fastRequest()
     ip::tcp::socket sock(service);
     sock.connect(ep);
 
-    string request;
-    msg.SerializeToString(&request);
-    char *size_request = convert_int32_to_str(request.size());
-    request = string(size_request, 4) + request;
-    delete[] size_request;
-    cout << request << " : " << request.size() << endl;
+    string request = msg_to_write(&msg);
     write(sock, buffer(request.c_str(), request.size()));
 
     char length_str[4];
@@ -51,12 +46,7 @@ void slowRequest()
     ip::tcp::socket sock(service);
     sock.connect(ep);
 
-    string request;
-    msg.SerializeToString(&request);
-    char *size_request = convert_int32_to_str(request.size());
-    request = string(size_request, 4) + request;
-    delete[] size_request;
-    cout << request << " : " << request.size() << endl;
+    string request = msg_to_write(&msg);
     write(sock, buffer(request.c_str(), request.size()));
 
     char length_str[4];
@@ -76,7 +66,7 @@ int main(int argc, char *argv[])
 {
     try
     {
-        slowRequest();
+        fastRequest();
     }
     catch (std::exception &e)
     {
