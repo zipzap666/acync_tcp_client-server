@@ -3,40 +3,41 @@ class server
 {
 public:
     server(boost::asio::io_context &io_context, short port)
-        : acceptor_(io_context, boost::asio::ip::tcp::endpoint(boost::asio::ip::tcp::v4(), port)),
-          timer_(io_context), count_connections_(new size_t(0)),
-          log_file_(new std::ofstream("connections.log", std::ios::app)), id_(0)
+        : _acceptor(io_context, boost::asio::ip::tcp::endpoint(boost::asio::ip::tcp::v4(), port)),
+          _timer(io_context), _count_connections(new size_t(0)),
+          _log_file(new std::ofstream("connections.log", std::ios::app)), _id(0)
     {
-        *log_file_ << "Start server." << std::endl;
+        *_log_file << "Start server." << std::endl;
         do_accept();
     }
 
 private:
     void do_accept()
     {
-        acceptor_.async_accept(
+        _acceptor.async_accept(
             [this](boost::system::error_code ec, boost::asio::ip::tcp::socket socket)
             {
                 if (!ec)
                 {
-                    std::make_shared<session>(
+                    std::make_shared<Session>(
                         std::move(socket),
-                        std::move(timer_),
-                        count_connections_,
-                        id_,
-                        log_file_)
+                        std::move(_timer),
+                        _count_connections,
+                        _id,
+                        _log_file)
                         ->start();
-                    id_++;
+                    _id++;
                 }
                 do_accept();
             });
     }
 
-    size_t id_;
-    std::shared_ptr<std::ofstream> log_file_;
-    std::shared_ptr<size_t> count_connections_;
-    boost::asio::ip::tcp::acceptor acceptor_;
-    boost::asio::deadline_timer timer_;
+    
+    size_t _id;
+    std::shared_ptr<std::ofstream> _log_file;
+    std::shared_ptr<size_t> _count_connections;
+    boost::asio::ip::tcp::acceptor _acceptor;
+    boost::asio::deadline_timer _timer;
 };
 
 int main(int argc, char *argv[])

@@ -32,23 +32,19 @@ inline uint32_t convert_str_to_int32(char str[sizeof(uint32_t)])
     return num;
 }
 
-inline TestTask::Messages::WrapperMessage *server_fast_response(TestTask::Messages::WrapperMessage *from)
+inline TestTask::Messages::WrapperMessage *server_fast_response()
 {
     TestTask::Messages::WrapperMessage *to = new TestTask::Messages::WrapperMessage();
-    TestTask::Messages::FastResponse *fast_msg = new TestTask::Messages::FastResponse();
     boost::posix_time::ptime t = boost::posix_time::microsec_clock::universal_time();
-    *fast_msg->mutable_current_date_time() = std::string(boost::posix_time::to_iso_string(t).c_str(), sizeof("YYYYMMDDThhmmss.fff") - 1);
-    to->set_allocated_fast_response(std::move(fast_msg));
+    *to->mutable_fast_response()->mutable_current_date_time() = 
+    std::string(boost::posix_time::to_iso_string(t).c_str(), sizeof("YYYYMMDDThhmmss.fff") - 1);
     return std::move(to);
 }
 
-inline TestTask::Messages::WrapperMessage *server_slow_response(TestTask::Messages::WrapperMessage *from, size_t count_connectios)
+inline TestTask::Messages::WrapperMessage *server_slow_response(size_t count_connectios)
 {
     TestTask::Messages::WrapperMessage *to = new TestTask::Messages::WrapperMessage();
-    TestTask::Messages::SlowResponse *slow_msg = new TestTask::Messages::SlowResponse();
-    slow_msg->set_connected_client_count(count_connectios);
-    to->set_allocated_slow_response(std::move(slow_msg));
-
+    to->mutable_slow_response()->set_connected_client_count(count_connectios);
     return std::move(to);
 }
 

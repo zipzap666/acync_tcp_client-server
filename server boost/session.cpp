@@ -1,50 +1,51 @@
 #include "session.h"
 
-session::session(boost::asio::ip::tcp::socket socket,
+
+Session::Session(boost::asio::ip::tcp::socket socket,
                  boost::asio::deadline_timer timer,
                  std::shared_ptr<size_t> &count_connections,
                  size_t id, std::shared_ptr<std::ofstream> &file)
-    : socket_(std::move(socket)),
-      timer_(std::move(timer)),
-      count_connectios_(count_connections),
-      id_(id), file_(file)
+    : _socket(std::move(socket)),
+      _timer(std::move(timer)),
+      _count_connectios(count_connections),
+      _id(id), _file(file)
 {
-    std::cout << "Connected id: " << id_ << std::endl;
-    *file_ << "Connected id: " << id_ << std::endl;
-    (*count_connectios_)++;
+    std::cout << "Connected id: " << _id << std::endl;
+    *_file << "Connected id: " << _id << std::endl;
+    (*_count_connectios)++;
 }
 
-session::~session()
+Session::~Session()
 {
-    std::cout << "Disconnected id: " << id_ << std::endl;
-    *file_ << "Disconnected id: " << id_ << std::endl;
-    (*count_connectios_)--;
+    std::cout << "Disconnected id: " << _id << std::endl;
+    *_file << "Disconnected id: " << _id << std::endl;
+    (*_count_connectios)--;
 }
 
-void session::start() { do_read_size(); }
+void Session::start() { do_read_size(); }
 
-void session::do_read_size()
+void Session::do_read_size()
 {
     auto self(shared_from_this());
-    char *data = new char[sizeof(uint32_t)]();
-    socket_.async_read_some(boost::asio::buffer(data, sizeof(uint32_t)),
-                            [this, self, data](boost::system::error_code ec, std::size_t length)
+    char *size = new char[sizeof(uint32_t)]();
+    _socket.async_read_some(boost::asio::buffer(size, sizeof(uint32_t)),
+                            [this, self, size](boost::system::error_code ec, std::size_t length)
                             {
                                 if (!ec)
                                 {
-                                    size_t length = convert_str_to_int32(data);
-                                    delete[] data;
+                                    size_t length = convert_str_to_int32(size);
+                                    delete[] size;
                                     do_read(length);
                                     return;
                                 }
                             });
 }
 
-void session::do_read(size_t size)
+void Session::do_read(size_t size)
 {
     auto self(shared_from_this());
     char *data = new char[size]();
-    socket_.async_read_some(boost::asio::buffer(data, size),
+    _socket.async_read_some(boost::asio::buffer(data, size),
                             [this, self, data, size](boost::system::error_code ec, std::size_t length)
                             {
                                 if (!ec)
@@ -61,7 +62,7 @@ void session::do_read(size_t size)
                             });
 }
 
-void session::check_request_msg(TestTask::Messages::WrapperMessage *from)
+void Session::check_request_msg(TestTask::Messages::WrapperMessage *from)
 {
     if (from->has_request_for_slow_response())
     {
@@ -73,35 +74,35 @@ void session::check_request_msg(TestTask::Messages::WrapperMessage *from)
     }
 }
 
-void session::fast_response(TestTask::Messages::WrapperMessage *from)
+void Session::fast_response(TestTask::Messages::WrapperMessage *from)
 {
-    TestTask::Messages::WrapperMessage *to = server_fast_response(from);
+    TestTask::Messages::WrapperMessage *to = server_fast_response();
     delete from;
     do_write(std::move(to));
 }
 
-void session::slow_response(TestTask::Messages::WrapperMessage *from)
+void Session::slow_response(TestTask::Messages::WrapperMessage *from)
 {
     auto self(shared_from_this());
-    timer_.expires_from_now(boost::posix_time::seconds(from->request_for_slow_response().time_in_seconds_to_sleep()));
-    timer_.async_wait([this, self, from](const boost::system::error_code &error)
+    TestTask::Messages::WrapperMessage *to = server_slow_response(*_count_connectios);
+    _timer.expires_from_now(boost::posix_time::seconds(from->request_for_slow_response().time_in_seconds_to_sleep()));
+    _timer.async_wait([this, self, from, to](const boost::system::error_code &error)
                       {
-            if (!error)
-                {
-                    TestTask::Messages::WrapperMessage *to = server_slow_response(from, *count_connectios_);
-                    delete from;
-                    do_write(std::move(to));
-                } });
+                        if (!error)
+                        {
+                            delete from;
+                            do_write(std::move(to));
+                        } });
 }
 
-void session::do_write(TestTask::Messages::WrapperMessage *to)
+void Session::do_write(TestTask::Messages::WrapperMessage *to)
 {
     auto self(shared_from_this());
 
     std::string response = msg_to_write(to);
     delete to;
 
-    boost::asio::async_write(socket_, boost::asio::buffer(response.c_str(), response.size()),
+    boost::asio::async_write(_socket, boost::asio::buffer(response.c_str(), response.size()),
                              [this, self](boost::system::error_code ec, std::size_t /*length*/)
                              {
                                  if (!ec)

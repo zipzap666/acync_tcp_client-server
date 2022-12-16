@@ -66,7 +66,7 @@ int main(int argc, char *argv[])
 {
     try
     {
-        fastRequest();
+        slowRequest();
     }
     catch (std::exception &e)
     {
