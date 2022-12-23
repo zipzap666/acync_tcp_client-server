@@ -33,7 +33,7 @@ inline uint32_t convert_str_to_int32(char str[sizeof(uint32_t)])
     return num;
 }
 
-inline std::string get_time() {
+    inline auto get_time() {
     using namespace std::chrono;
 
     time_t ms = duration_cast<milliseconds>(system_clock::now().time_since_epoch()).count();
@@ -48,21 +48,21 @@ inline std::string get_time() {
     return std::string(buffer);
 }
 
-inline TestTask::Messages::WrapperMessage *server_fast_response()
+inline auto server_fast_response()
 {
     TestTask::Messages::WrapperMessage *to = new TestTask::Messages::WrapperMessage();
     *to->mutable_fast_response()->mutable_current_date_time() = get_time();
     return std::move(to);
 }
 
-inline TestTask::Messages::WrapperMessage *server_slow_response(size_t count_connectios)
+inline auto server_slow_response(size_t count_connectios)
 {
     TestTask::Messages::WrapperMessage *to = new TestTask::Messages::WrapperMessage();
     to->mutable_slow_response()->set_connected_client_count(count_connectios);
     return std::move(to);
 }
 
-inline std::string msg_to_write(TestTask::Messages::WrapperMessage *msg)
+inline auto msg_to_write(TestTask::Messages::WrapperMessage *msg)
 {
     std::string str_msg;
     msg->SerializeToString(&str_msg);
@@ -70,6 +70,13 @@ inline std::string msg_to_write(TestTask::Messages::WrapperMessage *msg)
     str_msg = std::string(size_msg, sizeof(uint32_t)) + str_msg;
     delete[] size_msg;
     return str_msg;
+}
+
+inline auto read(const char *data)
+{
+    auto msg = new TestTask::Messages::WrapperMessage();
+    msg->ParseFromString(data);
+    return msg;
 }
 
 #endif // FUNCTIONS_HEADER

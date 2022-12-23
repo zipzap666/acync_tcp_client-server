@@ -2,32 +2,57 @@
 #include <fstream>
 #include <string>
 
-class Loger{
+enum levels
+{
+    START,
+    CONNECTION,
+    DISCONNECTION,
+    EXEPTION,
+    STOP
+};
+
+class Logger{
 public:
-    Loger(std::string path) : file(path, std::ios::app){}
-    ~Loger()
+    Logger(std::string path) : file(path, std::ios::app){}
+    ~Logger()
     {
         if(file.is_open())
             file.close();
     }
 
-    void log_start_server()
+    std::string log(std::string msg, levels level)
     {
-        if(file.is_open())
-            file << "Start server." << std::endl;
+        std::string final_msg;
+        switch (level)
+        {
+        case levels::START:
+            final_msg = "SERVER STARTED. " + msg;
+            break;
+        case levels::CONNECTION:
+            final_msg = "CONNECTION: " + msg;
+            break;
+        case levels::DISCONNECTION:
+            final_msg = "DISCONNECTION: " + msg;
+            break;
+        case levels::EXEPTION:
+            final_msg = "EXEPTION: " + msg;
+            break;
+        case levels::STOP:
+            final_msg = "SERVER STOPED. " + msg;
+            break;
+        default:
+            final_msg = msg;
+            break;
+        }
+        write(final_msg);
+        return final_msg;
     }
 
-    void log_connections(const size_t id)
-    {
-        if(file.is_open())
-            file << "Connected id: " << id << std::endl;
-    }
-
-    void log_disconnections(size_t id)
-    {
-        if(file.is_open())
-            file << "Disconnected id: " << id << std::endl;
-    }
 private:
+    void write(std::string msg)
+    {
+        if(file.is_open())
+            file << msg << std::endl;
+    }
     std::ofstream file;
 };

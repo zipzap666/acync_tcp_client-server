@@ -5,10 +5,15 @@ public:
     server(boost::asio::io_context &io_context, short port)
         : _acceptor(io_context, boost::asio::ip::tcp::endpoint(boost::asio::ip::tcp::v4(), port)),
           _timer(io_context), _count_connections(new size_t(0)),
-          _log_file(new Loger("connections.log")), _id(0)
+          _log_file(new Logger("connections.log")), _id(0)
     {
-        _log_file->log_start_server();
+        _log_file->log("", levels::START);
         do_accept();
+    }
+
+    ~server()
+    {
+        _log_file->log("", levels::STOP);
     }
 
 private:
@@ -34,7 +39,7 @@ private:
 
     
     size_t _id;
-    std::shared_ptr<Loger> _log_file;
+    std::shared_ptr<Logger> _log_file;
     std::shared_ptr<size_t> _count_connections;
     boost::asio::ip::tcp::acceptor _acceptor;
     boost::asio::deadline_timer _timer;

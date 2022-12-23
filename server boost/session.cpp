@@ -4,21 +4,24 @@
 Session::Session(boost::asio::ip::tcp::socket socket,
                  boost::asio::deadline_timer timer,
                  std::shared_ptr<size_t> &count_connections,
-                 const size_t id, std::shared_ptr<Loger> &log_file)
+                 const size_t id, std::shared_ptr<Logger> &log_file)
     : _socket(std::move(socket)),
       _timer(std::move(timer)),
       _count_connectios(count_connections),
       _id(id), _log_file(log_file)
 {
-    std::cout << "Connected id: " << _id << std::endl;
-    _log_file->log_connections(_id);
+    std::cout << 
+        _log_file->log(std::to_string(_id), levels::CONNECTION)
+    << std::endl;
+    
     (*_count_connectios)++;
 }
 
 Session::~Session()
 {
-    std::cout << "Disconnected id: " << _id << std::endl;
-    _log_file->log_disconnections(_id);
+    std::cout << 
+        _log_file->log(std::to_string(_id), levels::DISCONNECTION)
+    << std::endl;
     (*_count_connectios)--;
 }
 
@@ -33,11 +36,10 @@ void Session::do_read_size()
                             {
                                 if (!ec)
                                 {
-                                    size_t length = convert_str_to_int32(size);
-                                    delete[] size;
-                                    do_read(length);
+                                    do_read(convert_str_to_int32(size));
                                     return;
                                 }
+                                delete[] size;
                             });
 }
 
@@ -50,16 +52,11 @@ void Session::do_read(size_t size)
                             {
                                 if (!ec)
                                 {
-                                    TestTask::Messages::WrapperMessage *from = new TestTask::Messages::WrapperMessage();
-                                    from->ParseFromString(data);
-                                    delete[] data;
-                                    check_request_msg(std::move(from));
+                                    check_request_msg(std::move(read(data)));
                                 }
-                                else
-                                {
-                                    delete[] data;
-                                }
+                                delete[] data;
                             });
+    
 }
 
 void Session::check_request_msg(TestTask::Messages::WrapperMessage *from)
