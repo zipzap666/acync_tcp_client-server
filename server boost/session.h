@@ -6,9 +6,9 @@
 #include <fstream>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/asio.hpp>
-#include "loger.h"
-#include "functions.h"
-#include "./proto/message.pb.h"
+#include "../common/loger.h"
+#include "../common/functions.h"
+#include "../common/message.pb.h"
 
 
 class Session
