@@ -1,14 +1,15 @@
 #ifndef FUNCTIONS_HEADER
 #define FUNCTIONS_HEADER
-#include <boost/date_time/posix_time/posix_time.hpp>
 #include <iostream>
 #include <memory>
+#include <stdio.h>
+#include <chrono>
 #include "./proto/message.pb.h"
 
 inline char *convert_int32_to_str(uint32_t n)
 {
     char *str = new char[sizeof(uint32_t)]();
-    uint8_t mask = 255;
+    uint32_t mask = 255;
 
     for (int i = 3; i >= 0; --i)
     {
@@ -27,17 +28,30 @@ inline uint32_t convert_str_to_int32(char str[sizeof(uint32_t)])
         num += uint32_t(u_char(str[i]));
         num = num << 8;
     }
-    num += uint32_t(u_char(str[3]));
+    num += static_cast<uint32_t>(static_cast<u_char>(str[3]));
 
     return num;
+}
+
+inline std::string get_time() {
+    using namespace std::chrono;
+
+    time_t ms = duration_cast<milliseconds>(system_clock::now().time_since_epoch()).count();
+    
+    time_t s = ms / 1000;
+    std::tm * tm = std::localtime(&s);
+    const size_t size_template = sizeof("YYYYMMDDThhmmss.fff"); 
+    char buffer[size_template];
+    strftime(buffer, sizeof(size_template), "%Y%m%dT%H%M%S.", tm);
+    snprintf(&buffer[size_template - 4], 4, "%03ld", ms % 1000);
+    delete tm;    
+    return std::string(buffer);
 }
 
 inline TestTask::Messages::WrapperMessage *server_fast_response()
 {
     TestTask::Messages::WrapperMessage *to = new TestTask::Messages::WrapperMessage();
-    boost::posix_time::ptime t = boost::posix_time::microsec_clock::universal_time();
-    *to->mutable_fast_response()->mutable_current_date_time() = 
-    std::string(boost::posix_time::to_iso_string(t).c_str(), sizeof("YYYYMMDDThhmmss.fff") - 1);
+    *to->mutable_fast_response()->mutable_current_date_time() = get_time();
     return std::move(to);
 }
 

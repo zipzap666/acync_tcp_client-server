@@ -4,21 +4,21 @@
 Session::Session(boost::asio::ip::tcp::socket socket,
                  boost::asio::deadline_timer timer,
                  std::shared_ptr<size_t> &count_connections,
-                 size_t id, std::shared_ptr<std::ofstream> &file)
+                 const size_t id, std::shared_ptr<Loger> &log_file)
     : _socket(std::move(socket)),
       _timer(std::move(timer)),
       _count_connectios(count_connections),
-      _id(id), _file(file)
+      _id(id), _log_file(log_file)
 {
     std::cout << "Connected id: " << _id << std::endl;
-    *_file << "Connected id: " << _id << std::endl;
+    _log_file->log_connections(_id);
     (*_count_connectios)++;
 }
 
 Session::~Session()
 {
     std::cout << "Disconnected id: " << _id << std::endl;
-    *_file << "Disconnected id: " << _id << std::endl;
+    _log_file->log_disconnections(_id);
     (*_count_connectios)--;
 }
 

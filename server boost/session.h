@@ -6,6 +6,7 @@
 #include <fstream>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/asio.hpp>
+#include "loger.h"
 #include "functions.h"
 #include "./proto/message.pb.h"
 
@@ -17,7 +18,7 @@ public:
     Session(boost::asio::ip::tcp::socket socket,
             boost::asio::deadline_timer timer,
             std::shared_ptr<size_t> &count_connections,
-            size_t id, std::shared_ptr<std::ofstream> &file);
+            const size_t id, std::shared_ptr<Loger> &log_file);
 
     void start();
 
@@ -36,7 +37,7 @@ private:
 
     void do_write(TestTask::Messages::WrapperMessage *to);
 
-    std::shared_ptr<std::ofstream> _file;
+    std::shared_ptr<Loger> _log_file;
     const size_t _id;
     std::shared_ptr<size_t> _count_connectios;
     boost::asio::ip::tcp::socket _socket;
