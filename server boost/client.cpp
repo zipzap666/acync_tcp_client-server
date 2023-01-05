@@ -1,8 +1,8 @@
 #include <cstdlib>
 #include <iostream>
 #include <boost/asio.hpp>
-#include "functions.h"
-#include "./proto/message.pb.h"
+#include "../common/functions.h"
+#include "../common/message.pb.h"
 
 using boost::asio::ip::tcp;
 using namespace std;
