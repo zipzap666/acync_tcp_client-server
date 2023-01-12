@@ -15,10 +15,12 @@ std::shared_ptr<Message> parseDelimited(const void *data, size_t size, size_t *b
     {
         return nullptr;
     }
+    std::cout << size << std::endl;
 
     std::shared_ptr<Message> message = nullptr;
-    std::string buffer(static_cast<const char *>(data));
+    std::string buffer((const char *)(data));
     size_t length = convert_str_to_int32(buffer.substr(0, 4));
+    std::cout << length << std::endl;
 
     if (length > size - 4)
     {

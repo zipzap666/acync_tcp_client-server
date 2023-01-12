@@ -37,8 +37,7 @@ private:
             });
     }
 
-    
-    size_t _id;
+        size_t _id;
     std::shared_ptr<Logger> _log_file;
     std::shared_ptr<size_t> _count_connections;
     boost::asio::ip::tcp::acceptor _acceptor;

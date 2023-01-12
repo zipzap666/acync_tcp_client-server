@@ -19,7 +19,8 @@ void fastRequest()
     ip::tcp::socket sock(service);
     sock.connect(ep);
 
-    string request = msg_to_write(&msg);
+    string request = msg_to_write(msg);
+    cout << request.c_str() << endl;
     write(sock, buffer(request.c_str(), request.size()));
 
     char length_str[4];
@@ -46,7 +47,8 @@ void slowRequest()
     ip::tcp::socket sock(service);
     sock.connect(ep);
 
-    string request = msg_to_write(&msg);
+    string request = msg_to_write(msg);
+    cout << request.size() << endl;
     write(sock, buffer(request.c_str(), request.size()));
 
     char length_str[4];
